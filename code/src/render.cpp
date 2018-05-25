@@ -36,6 +36,9 @@ namespace Cube {
 }
 
 
+bool LoopDraw = false;
+bool InstancingDraw = false;
+
 
 //space01
 std::vector< glm::vec3 > vertices;
@@ -47,7 +50,6 @@ std::vector< glm::vec3 > vertices1;
 std::vector< glm::vec2 > uvs1;
 std::vector< glm::vec3 > normals1;
 
-glm::vec4 TrumPos = { -9.f, 0.f, 0.f, 1.f };
 
 
 extern bool loadOBJ(const char * path,
@@ -61,13 +63,21 @@ namespace Space01 {
 	void setupModel();
 	void cleanupModel();
 	void updateModel(const glm::mat4& transform);
-	void drawModel();
+	void drawModel(glm::vec3 color);
 }
+
+namespace Space01Instance {
+	void setupModel();
+	void cleanupModel();
+	void updateModel(const glm::mat4& transform);
+	void drawModel(glm::vec3 color);
+}
+
 namespace Space02 {
 	void setupModel();
 	void cleanupModel();
 	void updateModel(const glm::mat4& transform);
-	void drawModel();
+	void drawModel(glm::vec3 color);
 }
 
 ////////////////
@@ -126,6 +136,31 @@ void GLmousecb(MouseEvent ev) {
 	RV::prevMouse.lasty = ev.posy;
 }
 
+bool show_test_window = false;
+void GUI() {
+	bool show = false;
+	ImGui::Begin("Simulation Parameters", &show, 0);
+
+	// Do your GUI code here....
+	{
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);//FrameRate
+		ImGui::Checkbox("Loop draw", &LoopDraw);
+		ImGui::Checkbox("Instancing draw", &InstancingDraw);
+	}
+	// .........................
+
+	ImGui::End();
+
+	// Example code -- ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
+	if (show_test_window) {
+		ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+		ImGui::ShowTestWindow(&show_test_window);
+	}
+}
+
+
+
+
 void GLinit(int width, int height) {
 	glViewport(0, 0, width, height);
 	glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -150,7 +185,7 @@ void GLinit(int width, int height) {
 
 	Space01::setupModel();
 	Space02::setupModel();
-
+	Space01Instance::setupModel();
 
 
 
@@ -165,6 +200,7 @@ void GLcleanup() {
 */
 	Space01::cleanupModel();
 	Space02::cleanupModel();
+	Space01Instance::cleanupModel();
 }
 
 void GLrender(double currentTime) {
@@ -181,8 +217,6 @@ void GLrender(double currentTime) {
 	/*Box::drawCube();
 	Axis::drawAxis();
 	Cube::drawCube();*/
-	glm::vec4 offset = { 0.f, -0.25f,-4.73f,1.f };
-	glm::vec4 offset02 = { 0.3f, 0.f,-4.5f,1.f };
 
 	glm::mat4 scale = {
 		0.05f, 0.f, 0.f, 0.f,
@@ -191,21 +225,62 @@ void GLrender(double currentTime) {
 		0.f, 0.f, 0.f, 1.f,
 	};
 
-	
-	glm::mat4 off02 = glm::translate(glm::mat4(1.0f), glm::vec3(offset02.x, offset02.y, offset02.z));
-	glm::mat4 OBJ2 = off02 * scale;
-	Space02::updateModel(OBJ2);
-	
-	for (int i = 0; i < 100; i++)
+	if (LoopDraw)
 	{
-		offset.x += 0.3;
-		glm::mat4 off = glm::translate(glm::mat4(1.0f), glm::vec3(offset.x, offset.y, offset.z));
-		glm::mat4 OBJ1 = off * scale;
-		Space01::updateModel(OBJ1);
-		Space01::drawModel();
+		glm::mat4 scale = {
+			0.05f, 0.f, 0.f, 0.f,
+			0.f, 0.05f, 0.f, 0.f,
+			0.f, 0.f, 0.05f, 0.f,
+			0.f, 0.f, 0.f, 1.f,
+		};
+
+		glm::vec4 offset = { 0.f, 0.f,-4.73f,1.f };
+		glm::vec4 offset02 = { -17.f, 0.f,-4.73f,1.f };
+		glm::vec4 movement = { sin(currentTime), 0.f, 0.f,1.f };
+		glm::vec3 color = { 0.f, 1.f, 0.f };
+		glm::vec3 color02 = { 0.f, 1.f, 0.f };
+		for (int i = 0; i < 100; i++)
+		{
+			for (int j = 0; j < 50; j++)
+			{
+				offset.x += 0.3;
+				color.y -= 0.001;
+				color.z += 0.07;
+				glm::mat4 off = glm::translate(glm::mat4(1.0f), glm::vec3(offset.x + movement.x, offset.y, offset.z));
+				glm::mat4 OBJ1 = off * scale;
+				Space01::updateModel(OBJ1);
+				Space01::drawModel(color);
+			}
+			color.y = 1.f;
+			color.z = 0.f;
+			offset.x = 0;
+			offset.y += 0.25;
+		}
+		for (int i = 0; i < 100; i++)
+		{
+			for (int j = 0; j < 50; j++)
+			{
+				offset02.x += 0.3;
+				color02.y -= 0.001;
+				color02.x += 0.07;
+				glm::mat4 off = glm::translate(glm::mat4(1.0f), glm::vec3(offset02.x - movement.x, offset02.y, offset02.z));
+				glm::mat4 OBJ1 = off * scale;
+				Space02::updateModel(OBJ1);
+				Space02::drawModel(color02);
+			}
+			color02.y = 1.f;
+			color02.x = 0.f;
+			offset02.x = -17.f;
+			offset02.y += 0.25;
+		}
 
 	}
-	Space02::drawModel();
+	if (InstancingDraw)
+	{
+		std::cout << "Instance" << std::endl;
+		Space01Instance::updateModel(scale);
+		Space01Instance::drawModel({1.f, 0.f, 0.f});
+	}
 	
 	
 	ImGui::Render();
@@ -1135,14 +1210,14 @@ namespace Space01 {
 	void updateModel(const glm::mat4& transform) {
 		objMat = transform;
 	}
-	void drawModel() {
+	void drawModel(glm::vec3 color) {
 
 		glBindVertexArray(modelVao);
 		glUseProgram(modelProgram);
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
-		glUniform4f(glGetUniformLocation(modelProgram, "color"), 0.f, 0.f, 1.f, 0.f);
+		glUniform4f(glGetUniformLocation(modelProgram, "color"), color.x, color.y, color.z, 0.f);
 
 
 
@@ -1155,6 +1230,104 @@ namespace Space01 {
 
 
 }
+
+namespace Space01Instance {
+	GLuint modelVao;
+	GLuint modelVbo[3];
+	GLuint modelShaders[2];
+	GLuint modelProgram;
+	glm::mat4 objMat = glm::mat4(1.f);
+
+
+
+	const char* model_vertShader =
+		"#version 330\n\
+	in vec3 in_Position;\n\
+	in vec3 in_Normal;\n\
+	out vec4 vert_Normal;\n\
+	uniform mat4 objMat;\n\
+	uniform mat4 mv_Mat;\n\
+	uniform mat4 mvpMat;\n\
+	void main() {\n\
+		gl_Position = mvpMat * objMat * vec4(in_Position+(gl_InstanceID * vec3(5.f, 0.f, 0.f)), 1.0);\n\
+		vert_Normal = mv_Mat * objMat * vec4(in_Normal, 0.0);\n\
+	}";
+
+
+	const char* model_fragShader =
+		"#version 330\n\
+		in vec4 vert_Normal;\n\
+		out vec4 out_Color;\n\
+		uniform mat4 mv_Mat;\n\
+		uniform vec4 color;\n\
+		void main() {\n\
+			out_Color = vec4(color.xyz * dot(vert_Normal, mv_Mat*vec4(0.0, 1.0, 0.0, 0.0)) + color.xyz * 0.3, 1.0 );\n\
+}";
+	void setupModel() {
+		glGenVertexArrays(1, &modelVao);
+		glBindVertexArray(modelVao);
+		glGenBuffers(3, modelVbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, modelVbo[0]);
+
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+		glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, modelVbo[1]);
+
+		glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+		glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		modelShaders[0] = compileShader(model_vertShader, GL_VERTEX_SHADER, "cubeVert");
+		modelShaders[1] = compileShader(model_fragShader, GL_FRAGMENT_SHADER, "cubeFrag");
+
+		modelProgram = glCreateProgram();
+		glAttachShader(modelProgram, modelShaders[0]);
+		glAttachShader(modelProgram, modelShaders[1]);
+		glBindAttribLocation(modelProgram, 0, "in_Position");
+		glBindAttribLocation(modelProgram, 1, "in_Normal");
+		linkProgram(modelProgram);
+	}
+	void cleanupModel() {
+
+		glDeleteBuffers(2, modelVbo);
+		glDeleteVertexArrays(1, &modelVao);
+
+		glDeleteProgram(modelProgram);
+		glDeleteShader(modelShaders[0]);
+		glDeleteShader(modelShaders[1]);
+	}
+	void updateModel(const glm::mat4& transform) {
+		objMat = transform;
+	}
+	void drawModel(glm::vec3 color) {
+
+		glBindVertexArray(modelVao);
+		glUseProgram(modelProgram);
+		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
+		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
+		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
+		glUniform4f(glGetUniformLocation(modelProgram, "color"), color.x, color.y, color.z, 0.f);
+
+		
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 10000, 10000);
+
+		glUseProgram(0);
+		glBindVertexArray(0);
+
+	}
+
+}
+
+
 
 namespace Space02 {
 	GLuint modelVao;
@@ -1233,14 +1406,14 @@ namespace Space02 {
 	void updateModel(const glm::mat4& transform) {
 		objMat = transform;
 	}
-	void drawModel() {
+	void drawModel(glm::vec3 color) {
 
 		glBindVertexArray(modelVao);
 		glUseProgram(modelProgram);
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
-		glUniform4f(glGetUniformLocation(modelProgram, "color"), 0.f, 0.f, 1.f, 0.f);
+		glUniform4f(glGetUniformLocation(modelProgram, "color"), color.x, color.y, color.z, 0.f);
 
 
 
