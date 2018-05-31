@@ -91,7 +91,7 @@ namespace Space02Multidraw {
 	void setupModel();
 	void cleanupModel();
 	void updateModel(const glm::mat4& transform);
-	void drawModel(glm::vec3 color);
+	void drawModel(glm::vec3 color, Alien X);
 }
 
 ////////////////
@@ -299,7 +299,14 @@ void GLrender(double currentTime) {
 	if (MultiDrawIndirect)
 	{
 		Space02Multidraw::updateModel(scale);
-		Space02Multidraw::drawModel({ 0.f, 1.f, 0.f });
+
+		Alien X;
+		X.count = vertices1.size();
+		X.instanceCount = 1; //numero de modelos a pintar
+		X.first = 0;
+		X.baseInstance = 0;
+
+		Space02Multidraw::drawModel({ 0.f, 1.f, 0.f }, X);
 	}
 	
 	ImGui::Render();
@@ -1269,15 +1276,10 @@ namespace Space01Instance {
 	uniform mat4 mv_Mat;\n\
 	uniform mat4 mvpMat;\n\
 	void main() {\n\
-		vec3 mov = vec3(cos(time), 0.f, 0.f); \n\
+		vec3 mov = vec3(sin(time), 0.f, 0.f); \n\
 		vec3 positionx = vec3(6.f, 0.f, 0.f);\n\
-		vec3 positiony = vec3(0.f, 0.1f, 0.f);\n\
-		if(gl_InstanceID % 50 == 0){ \n\
-			positionx.x -= 6.f;\n\
-			positionx = positionx+positiony;\n\
-		}\n\
 		vec3 compos = mov+positionx;\n\
-		gl_Position = mvpMat * objMat * vec4(in_Position+(gl_InstanceID * positionx), 1.0);\n\
+		gl_Position = mvpMat * objMat * vec4(in_Position+(gl_InstanceID * compos), 1.0);\n\
 		vert_Normal = mv_Mat * objMat * vec4(in_Normal, 0.0);\n\
 	}";
 
@@ -1346,7 +1348,7 @@ namespace Space01Instance {
 		glUniform4f(glGetUniformLocation(modelProgram, "color"), color.x, color.y, color.z, 0.f);
 		glUniform1f(glGetUniformLocation(modelProgram, "time"), currentTime);
 		
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 10000, 1000);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 10000, 10000);
 
 		glUseProgram(0);
 		glBindVertexArray(0);
@@ -1533,7 +1535,7 @@ namespace Space02Multidraw {
 	void updateModel(const glm::mat4& transform) {
 		objMat = transform;
 	}
-	void drawModel(glm::vec3 color) {
+	void drawModel(glm::vec3 color, Alien X) {
 
 		glBindVertexArray(modelVao);
 		glUseProgram(modelProgram);
@@ -1543,8 +1545,9 @@ namespace Space02Multidraw {
 		glUniform4f(glGetUniformLocation(modelProgram, "color"), color.x, color.y, color.z, 0.f);
 
 
-
-		//glMultiDrawArraysIndirect(GL_TRIANGLES, Alien, Alien.first , 10000);
+		std::cout << "AAA" << glewGetErrorString(glGetError())<< std::endl;
+		glMultiDrawArraysIndirect(GL_TRIANGLES, &X, 1, 0);
+		std::cout << "BBB" << glewGetErrorString(glGetError()) << std::endl;
 
 		glUseProgram(0);
 		glBindVertexArray(0);

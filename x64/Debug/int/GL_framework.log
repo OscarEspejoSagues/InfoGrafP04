@@ -1,11 +1,13 @@
 ﻿  render.cpp
-d:\uni\p04\infografp04\code\src\render.cpp(262): warning C4305: '+=': truncamiento de 'double' a 'float'
-d:\uni\p04\infografp04\code\src\render.cpp(263): warning C4305: '-=': truncamiento de 'double' a 'float'
-d:\uni\p04\infografp04\code\src\render.cpp(264): warning C4305: '+=': truncamiento de 'double' a 'float'
-d:\uni\p04\infografp04\code\src\render.cpp(279): warning C4305: '+=': truncamiento de 'double' a 'float'
-d:\uni\p04\infografp04\code\src\render.cpp(280): warning C4305: '-=': truncamiento de 'double' a 'float'
-d:\uni\p04\infografp04\code\src\render.cpp(281): warning C4305: '+=': truncamiento de 'double' a 'float'
-d:\uni\p04\infografp04\code\src\render.cpp(1347): warning C4244: 'argumento': conversión de 'double' a 'GLfloat'; posible pérdida de datos
-  GL_framework.vcxproj -> D:\Uni\P04\InfoGrafP04\x64\Debug\GL_framework.exe
-  0 archivo(s) copiado(s)
-  0 archivo(s) copiado(s)
+d:\infogruf\infografp04\code\src\render.cpp(262): warning C4305: '+=': truncation from 'double' to 'float'
+d:\infogruf\infografp04\code\src\render.cpp(263): warning C4305: '-=': truncation from 'double' to 'float'
+d:\infogruf\infografp04\code\src\render.cpp(264): warning C4305: '+=': truncation from 'double' to 'float'
+d:\infogruf\infografp04\code\src\render.cpp(279): warning C4305: '+=': truncation from 'double' to 'float'
+d:\infogruf\infografp04\code\src\render.cpp(280): warning C4305: '-=': truncation from 'double' to 'float'
+d:\infogruf\infografp04\code\src\render.cpp(281): warning C4305: '+=': truncation from 'double' to 'float'
+d:\infogruf\infografp04\code\src\render.cpp(304): warning C4267: '=': conversion from 'size_t' to 'glm::uint', possible loss of data
+d:\infogruf\infografp04\code\src\render.cpp(1349): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+  GL_framework.vcxproj -> D:\InfoGruf\InfoGrafP04\x64\Debug\GL_framework.exe
+  GL_framework.vcxproj -> D:\InfoGruf\InfoGrafP04\x64\Debug\GL_framework.pdb (Partial PDB)
+  0 File(s) copied
+  0 File(s) copied
