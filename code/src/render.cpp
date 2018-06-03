@@ -95,7 +95,7 @@ namespace Space02Multidraw {
 	void setupModel();
 	void cleanupModel();
 	void updateModel(const glm::mat4& transform);
-	void drawModel(glm::vec3 color, Alien X);
+	void drawModel(glm::vec3 color, double currentTime);
 }
 
 ////////////////
@@ -311,15 +311,8 @@ void GLrender(double currentTime) {
 	if (State == 2)
 	{
 		Space02Multidraw::updateModel(scale);
-
-		Alien X;
-		X.count = vertices1.size();
-		X.instanceCount = 1; //numero de modelos a pintar
-		X.first = 0;
-		X.baseInstance = 0;
-
-		glm::vec3 color = {0.f, sin(currentTime), 0.f};
-		Space02Multidraw::drawModel(color, X);
+		glm::vec3 color = { -cos(currentTime), sin(currentTime), cos(currentTime) };
+		Space02Multidraw::drawModel(color, currentTime);
 	}
 	
 	ImGui::Render();
@@ -1585,11 +1578,15 @@ namespace Space02Multidraw {
 	in vec3 in_Position;\n\
 	in vec3 in_Normal;\n\
 	out vec4 vert_Normal;\n\
+	uniform float time;\n\
 	uniform mat4 objMat;\n\
 	uniform mat4 mv_Mat;\n\
 	uniform mat4 mvpMat;\n\
 	void main() {\n\
-		gl_Position = mvpMat * objMat * vec4(in_Position, 1.0);\n\
+		vec3 mov = vec3(-sin(time), 0.f, 0.f); \n\
+		vec3 positionx = vec3(6.f, 0.f, 0.f);\n\
+		vec3 compos = mov+positionx;\n\
+		gl_Position = mvpMat * objMat * vec4(in_Position+(gl_InstanceID * compos), 1.0);\n\
 		vert_Normal = mv_Mat * objMat * vec4(in_Normal, 0.0);\n\
 	}";
 
@@ -1603,7 +1600,21 @@ namespace Space02Multidraw {
 		void main() {\n\
 			out_Color = vec4(color.xyz * dot(vert_Normal, mv_Mat*vec4(0.0, 1.0, 0.0, 0.0)) + color.xyz * 0.3, 1.0 );\n\
 }";
+
+	typedef  struct {
+		GLuint  count;
+		GLuint  primCount;
+		GLuint  first;
+		GLuint  baseInstance;
+	} DrawArraysIndirectCommand;
+	DrawArraysIndirectCommand cmd;
+
 	void setupModel() {
+		cmd.count = vertices.size();
+		cmd.primCount = 10000;
+		cmd.first = 0;
+		cmd.baseInstance = 0;
+
 		glGenVertexArrays(1, &modelVao);
 		glBindVertexArray(modelVao);
 		glGenBuffers(3, modelVbo);
@@ -1635,10 +1646,14 @@ namespace Space02Multidraw {
 		glBindAttribLocation(modelProgram, 0, "in_Position");
 		glBindAttribLocation(modelProgram, 1, "in_Normal");
 		linkProgram(modelProgram);
+
+
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, modelVbo[2]);
+		glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(cmd), &cmd, GL_STATIC_DRAW);
 	}
 	void cleanupModel() {
 
-		glDeleteBuffers(2, modelVbo);
+		glDeleteBuffers(3, modelVbo);
 		glDeleteVertexArrays(1, &modelVao);
 
 		glDeleteProgram(modelProgram);
@@ -1648,7 +1663,7 @@ namespace Space02Multidraw {
 	void updateModel(const glm::mat4& transform) {
 		objMat = transform;
 	}
-	void drawModel(glm::vec3 color, Alien X) {
+	void drawModel(glm::vec3 color, double currentTime) {
 
 		glBindVertexArray(modelVao);
 		glUseProgram(modelProgram);
@@ -1656,11 +1671,10 @@ namespace Space02Multidraw {
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(modelProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
 		glUniform4f(glGetUniformLocation(modelProgram, "color"), color.x, color.y, color.z, 0.f);
+		glUniform1f(glGetUniformLocation(modelProgram, "time"), currentTime);
 
+		glMultiDrawArraysIndirect(GL_TRIANGLES, 0, 1, 0);
 
-		std::cout << "AAA" << glewGetErrorString(glGetError())<< std::endl;
-		glMultiDrawArraysIndirect(GL_TRIANGLES, &X, 1, 0);
-		std::cout << "BBB" << glewGetErrorString(glGetError()) << std::endl;
 
 		glUseProgram(0);
 		glBindVertexArray(0);
